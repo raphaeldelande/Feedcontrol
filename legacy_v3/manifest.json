@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "FeedControl — IA sémantique",
+  "version": "0.3.0",
+  "description": "Filtrage local YouTube, Shorts, audit du feed et temps de visionnage.",
+  "permissions": [
+    "storage",
+    "tabs"
+  ],
+  "action": {
+    "default_title": "FeedControl",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "classifier.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8765/*"
+  ]
+}

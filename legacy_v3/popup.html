@@ -1,0 +1,16 @@
+﻿<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FeedControl</title><link rel="stylesheet" href="ui.css"></head>
+<body><main>
+<header><div class="wordmark">FEED<span>CONTROL</span></div><small>v0.3</small></header>
+<p class="intro">Reprends le contrôle de ton flux YouTube.</p>
+<label class="switch">Activer le filtrage<input id="enabled" type="checkbox"></label>
+<h2>Catégories préférées</h2><div class="checks" id="positive"></div>
+<label class="switch">Afficher uniquement la sélection<input id="exclusive" type="checkbox"></label>
+<h2>Catégories masquées</h2><div class="checks" id="negative"></div>
+<h2>Shorts</h2>
+<label class="switch">Masquer tous les Shorts<input id="shortsOff" type="checkbox"></label>
+<label class="switch">Filtrer aussi les Shorts<input id="shortsFilter" type="checkbox"></label>
+<p class="hint" id="status" aria-live="polite"></p>
+<div class="actions"><button id="demo">Démo</button><button id="dashboard">Audit</button><button id="youtube">YouTube</button></div>
+<footer>Règles locales et analyse sémantique des titres via le serveur Python local. Aucun historique transmis à un service tiers.</footer>
+</main><script src="classifier.js"></script><script src="popup.js"></script></body></html>

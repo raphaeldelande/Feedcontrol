@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FeedControl | Démonstration</title>
+<link rel="stylesheet" href="demo.css">
+</head>
+<body>
+<div class="shell">
+  <header><div class="brand"><span class="logo">F</span> FeedControl <span class="tag">Démo locale, hors ligne</span></div><span class="version">MVP · v0.1</span></header>
+  <div class="hero"><h1>Reprends le contrôle de ton feed.</h1><p>Passe d'un flux brainrot à un flux de culture ou de motivation en un clic. Aucun compte ni réseau requis.</p></div>
+  <section class="controls" aria-label="Contrôles du feed">
+    <div><label for="category">Catégorie ciblée</label><select id="category"><option value="brainrot">Brainrot</option><option value="motivation">Motivation</option><option value="culture">Culture</option><option value="science">IA et sciences</option><option value="sport">Sport</option><option value="suggestif">Contenus suggestifs</option></select></div>
+    <div><label>Mode</label><div class="modes"><button data-mode="all">Tout voir</button><button data-mode="hide">Masquer</button><button data-mode="only">Uniquement</button></div></div>
+    <label class="check"><input type="checkbox" id="block-suggestive"> Masquer aussi les contenus suggestifs</label>
+  </section>
+  <section class="summary"><div><h2>Flux filtré</h2><p id="detail">Modifie les réglages pour voir le résultat.</p></div><div class="metric"><strong id="visible-count">0</strong><span>vidéos visibles</span></div><div class="metric"><strong id="hidden-count">0</strong><span>vidéos masquées</span></div></section>
+  <main id="videos" class="grid" aria-live="polite"></main>
+  <footer>Les vidéos sont fictives. Cette démo teste exactement les mêmes règles que l'extension YouTube. La classification est fondée sur des mots-clés et peut se tromper.</footer>
+</div>
+<script src="classifier.js"></script><script src="demo.js"></script>
+</body>
+</html>

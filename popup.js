@@ -1,0 +1,26 @@
+const C=FeedControlClassifier,$=id=>document.getElementById(id);let settings=C.migrate({}),saveQueue=Promise.resolve();
+function categoryList(id,codes,key){
+ const root=$(id);if(!root)return;
+ for(const code of codes){const t=C.TAX[code],label=document.createElement('label');label.className='category';const icon=document.createElement('span');icon.className='icon';icon.style.setProperty('--cat',t.color);
+ const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d',t.icon);svg.append(path);icon.append(svg);
+ const text=document.createElement('span');text.textContent=t.label;const input=document.createElement('input');input.type='checkbox';input.dataset.code=code;input.dataset.key=key;input.setAttribute('aria-label',t.label);input.onchange=()=>{const next=[...document.querySelectorAll(`[data-key="${key}"]:checked`)].map(e=>e.dataset.code);save({[key]:next});};label.append(icon,text,input);root.append(label);}
+}
+function save(patch){settings={...settings,...patch};saveQueue=saveQueue.then(()=>chrome.storage.local.set(patch)).then(()=>{if($('saved'))$('saved').textContent='Préférences enregistrées · appliquées aux onglets YouTube.';}).catch(()=>{if($('saved'))$('saved').textContent='Erreur de stockage : préférences non enregistrées.';});}
+function fill(){for(const key of Object.keys(C.DEFAULTS)){const el=$(key);if(el){if(el.type==='checkbox')el.checked=!!settings[key];else el.value=settings[key];}}
+ document.querySelectorAll('[data-code]').forEach(el=>el.checked=settings[el.dataset.key].includes(el.dataset.code));}
+async function renderStats(){
+ const {statsV4}=await chrome.storage.local.get('statsV4');const days=Number($('period')?.value||7),metric=$('metric')?.value||'seconds';const cutoff=new Date(Date.now()-(days-1)*86400000).toISOString().slice(0,10);const values={};let seconds=0,hidden=0,shorts=0,views=0,favored=0;
+ for(const [day,d] of Object.entries(statsV4?.days||{})){if(day<cutoff)continue;seconds+=d.seconds;hidden+=d.hidden;views+=d.views;shorts+=d.shortsSeconds;favored+=d.favoredSeconds||0;for(const [c,v] of Object.entries(d.categories))values[c]=(values[c]||0)+(v[metric]||0);}
+ $('totals').textContent=`${Math.round(seconds/60)} min · ${views} vidéos · ${hidden} cartes masquées · ${Math.round(shorts/60)} min Shorts · ${Math.round(favored/60)} min thèmes favoris`;
+ const root=$('bars');root.replaceChildren();const max=Math.max(1,...Object.values(values));
+ for(const [code,value] of Object.entries(values).sort((a,b)=>b[1]-a[1])){if(!value)continue;const row=document.createElement('div');row.className='barrow';const label=document.createElement('div');label.className='bar-label';const name=document.createElement('span');name.textContent=C.LABELS[code]||'Non classé';const val=document.createElement('span');val.textContent=metric==='seconds'?`${(value/60).toFixed(1)} min`:value;label.append(name,val);const bar=document.createElement('div');bar.className='bar';const fill=document.createElement('div');fill.className='fill';fill.style.width=`${value/max*100}%`;fill.style.setProperty('--cat',C.TAX[code]?.color||'#aaa');bar.append(fill);row.append(label,bar);root.append(row);}
+ if(!root.children.length)root.textContent='Aucune donnée pour le moment.';
+}
+async function status(){const s=await chrome.runtime.sendMessage({type:'FC_STATUS'});if($('status'))$('status').textContent=s.status==='ok'?`Serveur connecté · ${s.model_loaded?'IA sémantique (texte)':'heuristique texte, sans vision'} · API YouTube ${s.discovery?'clé configurée (accès à vérifier par recherche)':'non configurée'}`:s.error;}
+async function init(){categoryList('positive',C.POSITIVE,'favorites');categoryList('negative',C.NEGATIVE.filter(c=>c!=='shorts'),'blocked');categoryList('negativeTopics',C.POSITIVE,'blocked');settings=C.migrate(await chrome.storage.local.get(null));await chrome.storage.local.set(settings);fill();
+ for(const key of Object.keys(C.DEFAULTS)){const el=$(key);if(el)el.onchange=()=>{let value=el.type==='checkbox'?el.checked:el.type==='number'||key==='retentionDays'?Number(el.value):el.value;if(el.type==='number'){value=Math.max(Number(el.min),Math.min(Number(el.max),value||Number(el.min)));el.value=value;}save({[key]:value});};}
+ $('period').onchange=renderStats;$('metric').onchange=renderStats;$('reset').onclick=async()=>{if(confirm('Effacer toutes les statistiques locales ?')){await chrome.runtime.sendMessage({type:'FC_CLEAR'});renderStats();}};
+ if($('stats'))$('stats').onclick=()=>chrome.tabs.create({url:chrome.runtime.getURL('stats.html')});if($('youtube'))$('youtube').onclick=()=>chrome.tabs.create({url:'https://www.youtube.com/'});
+ chrome.storage.onChanged.addListener((changes,area)=>{if(area!=='local')return;if(changes.statsV4)renderStats();for(const key of Object.keys(C.DEFAULTS))if(changes[key])settings[key]=changes[key].newValue;fill();});await renderStats();await status();
+}
+init().catch(e=>{if($('status'))$('status').textContent='Initialisation impossible : '+e.message;});

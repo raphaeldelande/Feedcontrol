@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "FeedControl — Votre attention, vos choix",
+  "version": "0.4.0",
+  "description": "Filtres explicables, découvertes YouTube et suivi local avec consentement.",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_title": "FeedControl",
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "taxonomy.js",
+        "classifier.js",
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8765/*"
+  ]
+}
