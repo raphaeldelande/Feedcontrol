@@ -1,4 +1,18 @@
-# FeedControl V4 — état vérifié
+# FeedControl 0.4.1 — corrections après retour utilisateur
+
+- Popup sur une seule colonne, page Réglages en grand et diagnostic avec aide serveur/API. Géométrie vérifiée à 280/320/400 px dans Chromium.
+- Découverte automatique en mode Uniquement et lors de l’activation Petits créateurs ; état d’erreur conservé, raisons si tous les candidats sont exclus et recherche YouTube normale en repli. Pas de vidéos inventées sans clé.
+- Requêtes spécifiques au genre (Cuisine : recettes pas à pas), pool jusqu’à 64 candidats, pagination réelle après temporisation.
+- Petits créateurs : recherches pertinence + date, abonnés publics visibles, compteur compatible/inconnu et bonus de pertinence/qualité significatif.
+- Profils détaillés des 16 genres, exemples/contre-exemples FR/EN, types et qualité distincts. Shorts sans indice pédagogique exclus par défaut ; option explicite pour les inconnues ; titres/Shorts modernes sans texte gérés.
+- Examen réel des miniatures : pixels (formes rouges/monochrome), OCR Tesseract local, cache et limites. Scènes/genres par modèle Ollama optionnel ; son inférence réelle n’a pas été vérifiée ici. Pas de reconnaissance d’identité ni de conclusion motivation sur une image monochrome seule.
+- Tests exécutés : **36 JavaScript, 15 Python**, et scénario Chromium DOM étendu avec APIs Chrome simulées. OCR réellement exécuté sur une image synthétique, formes rouges comparées à un objet rouge uni. Aucune précision garantie sur des images réelles non testées.
+- Venv neuf installé avec Pillow/numpy, serveur HTTP testé. Aucun test API Google authentifié : clé absente. Modèles texte/vision optionnels non exécutés (téléchargement Hugging Face refusé HTTP 403 ; Ollama absent).
+- Récupération d’une miniature publique sur i.ytimg.com tentée, refusée par le proxy cloud (HTTP 403) ; analyse d’images téléchargées à vérifier sur votre ordinateur.
+- Validation MV3 sur YouTube réel toujours à faire sur une machine autorisée ; la politique Chromium cloud bloque le chargement d’extensions. Le script PowerShell est fourni mais non exécuté sur Windows.
+
+## Historique 0.4.0 (avant ces corrections)
+
 
 ## Opérationnel dans les tests exécutés
 

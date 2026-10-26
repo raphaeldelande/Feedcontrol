@@ -1,90 +1,119 @@
-# FeedControl V4
+# FeedControl 0.4.1 — installation et fonctionnement réel
 
-Extension Chrome Manifest V3 pour choisir ses thèmes YouTube, filtrer l’accueil, découvrir des vidéos et mesurer localement sa lecture **avec consentement**. FeedControl ne modifie pas l’algorithme de YouTube.
+Extension Chrome Manifest V3 : filtres explicables sur l’accueil YouTube, découvertes indépendantes, petits créateurs et suivi local avec consentement. FeedControl ne modifie pas l’algorithme YouTube.
 
-## Ce qui a été repris
+## Mettre à jour depuis la V4
 
-Les 13 fichiers V3 fournis ont été examinés et conservés dans `legacy_v3/` (archive, pas une deuxième extension à charger). Le serveur local `127.0.0.1:8765` et `/classify`, le content script, le service worker, le classificateur, la démo et l’audit ont été prolongés. La V3 fournie référençait un `popup.js` et un `ui.css` absents. Aucun environnement virtuel, test ni modèle téléchargé n’était joint. Le dépôt initial ne contenait qu’un README. La branche de travail est `feedcontrol-v4` ; les fichiers originaux sont aussi sauvegardés hors dépôt dans `/workspace/feedcontrol-v3-backup` sur la machine de développement.
+1. Télécharger le ZIP de la branche `feedcontrol-v4` et le décompresser dans un dossier distinct.
+2. Arrêter l’ancien Python avec Ctrl+C. Démarrer le nouveau serveur depuis ce nouveau dossier (commandes ci-dessous). Si vous aviez une clé, conserver votre `.env` local en le copiant dans ce dossier ; ne le publiez jamais.
+3. Dans `chrome://extensions`, retirer l’ancienne extension puis charger le nouveau dossier, ou remplacer les fichiers de l’ancien dossier et cliquer sur **Recharger** pour conserver l’identifiant et les préférences.
+4. Recharger les onglets YouTube déjà ouverts. Ouvrir le popup puis **Actualiser le diagnostic**.
 
-**Maquette absente :** `ui_reference/feedcontrol-v2.html` n’a pas été fourni. Le popup sombre de 400 px, les trois sections, les dégradés, les SVG dont le coureur Sport, et le footer ont été créés à partir des spécifications textuelles. Ce n’est pas une reproduction vérifiée de la V2.
+Le popup utilise maintenant une seule colonne. **Ouvrir les réglages en grand** donne une page complète sans les contraintes de taille du popup. Le diagnostic distingue ancien serveur, serveur arrêté, modèle texte inactif, clé absente, erreur API et modules visuels disponibles.
 
-## Installation Windows / PowerShell
+## Windows / PowerShell
 
-Prérequis : Python 3.10+ et Chrome. Le fonctionnement de base utilise uniquement la bibliothèque standard Python : aucune dépendance à télécharger.
+Prérequis : Python 3.10+ et Chrome. Ouvrir PowerShell dans le dossier qui contient `manifest.json` et `ai_server.py` :
 
 ```powershell
-cd C:\chemin\Feedcontrol
 py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-Copy-Item .env.example .env
-python ai_server.py
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe ai_server.py
 ```
 
-Ne recopiez pas `.env.example` par-dessus un `.env` existant. Si PowerShell bloque l’activation, utilisez directement `.\.venv\Scripts\python.exe ai_server.py` sans changer la politique globale de la machine.
+L’activation du venv est facultative. Si vous souhaitez l’activer : `.\.venv\Scripts\Activate.ps1` puis `python ai_server.py`. Pas besoin de modifier la politique PowerShell pour utiliser directement le Python du venv.
 
-Ouvrez `.env` localement dans votre éditeur et renseignez `YOUTUBE_API_KEY` avec une clé d’un projet ayant **YouTube Data API v3** activée. Ne collez jamais cette clé dans l’extension, dans Git ou dans un chat. Les restrictions de clé doivent autoriser l’API et la machine qui exécute Python (pas une restriction de référent navigateur). Redémarrez Python après modification. Sans clé : classification disponible, découverte désactivée avec message de configuration.
+Le script `lancer_feedcontrol.ps1` reproduit ces étapes, préserve un `.env` existant et crée une copie du modèle seulement si le fichier n’existe pas. Il n’a pas été exécuté sur Windows ici ; les commandes Python équivalentes ont été vérifiées sous Linux dans un venv neuf. L’installation de base ajoute Pillow et numpy pour les pixels ; aucun gros modèle n’est téléchargé automatiquement.
 
-Dans Chrome, ouvrez `chrome://extensions`, activez le mode développeur, choisissez **Charger l’extension non empaquetée**, sélectionnez le dossier contenant `manifest.json`. Épinglez FeedControl. Rechargez les onglets YouTube déjà ouverts. Le serveur doit tourner **sur le même ordinateur que Chrome** : le serveur de cet environnement cloud n’est pas accessible au Chrome de votre ordinateur par `127.0.0.1`.
+Dans `chrome://extensions`, activer Mode développeur → Charger l’extension non empaquetée → sélectionner le dossier contenant le manifest. Garder le terminal Python ouvert. **Chrome et Python doivent tourner sur le même ordinateur.** Un Python exécuté dans le cloud n’est pas le serveur local de votre Chrome personnel.
 
-### Modèle multilingue V3, optionnel
+## Trouver de nouvelles vidéos, même absentes du feed
+
+Le mode **Uniquement mes thèmes** et l’option **Petits créateurs** déclenchent maintenant la découverte automatiquement. Le mode Favoriser utilise le bouton Découvertes ou l’exploration manuelle. Les candidats apparaissent dans **Découvertes FeedControl**, séparément des recommandations natives.
+
+La recherche automatique exige **YouTube Data API v3** :
+
+1. Dans Google Cloud Console, créer/choisir un projet et activer YouTube Data API v3.
+2. Dans API et services → Identifiants, créer une clé API, restreinte à cette API et à votre usage serveur.
+3. Copier `.env.example` vers `.env` **seulement si `.env` n’existe pas**, puis compléter localement `YOUTUBE_API_KEY=` dans votre éditeur.
+4. Arrêter puis relancer Python. Revenir dans le popup, Actualiser le diagnostic, puis Explorer dans le panneau YouTube.
+
+Ne jamais donner la clé dans un chat, la mettre dans l’extension ou dans Git. Une clé configurée ne prouve pas son autorisation ; le diagnostic affiche la dernière recherche réellement effectuée. Sans clé, serveur ou quota, le panneau explique le blocage et propose des **liens normaux de recherche YouTube** par thème. Ces liens n’injectent pas de faux résultats et ne remplacent pas une API configurée.
+
+Pour Cuisine : la recherche utilise « recette cuisine maison pas à pas », et non seulement le libellé « Cuisine ». Les filtres transversaux et les exclusions s’appliquent ensuite aux vrais résultats. Si tous sont exclus, le panneau montre combien et pourquoi, sans assouplir silencieusement les critères.
+
+## Classification plus précise
+
+- `taxonomy.json` / `taxonomy.js` : catégories et vocabulaire FR/EN, incluant vocabulaire de cuisine, sport, bricolage et punchlines de motivation.
+- `genre_profiles.json` : pour **chacun des 16 genres**, exemples positifs, contre-exemples, codes visuels et requête de découverte. Le modèle texte utilise les positifs, contre-exemples et types de contenu ; le modèle visuel reçoit les codes visuels.
+- `classification_rules.json` / `.js` : mêmes types et seuils qualitatifs des deux côtés (égalité testée).
+- Le thème, le type, la qualité et sa confiance restent distincts. Un nom de personnalité, une image monochrome ou une petite chaîne ne certifient jamais la qualité.
+- Shorts : **seulement analyse ou apprentissage** activé par défaut. Un edit sportif, un match court sans explication ou un Short sans titre ne passent pas uniquement parce qu’ils sont sportifs. Analyses/cours/contenu éducatif/documentaires restent admissibles. Cette option est désactivable séparément de « tous les Shorts ».
+- L’option **Masquer les vidéos non classées** est explicite. Sans cette option, les inconnues peuvent rester visibles en mode Favoriser, particulièrement si le serveur est arrêté. Le mode Uniquement ne les présente pas comme validées.
+- Qualité : Souple score/confiance ≥0,40/0,35 ; Équilibré ≥0,65/0,55 ; Strict ≥0,80/0,65. Ce sont des estimations, pas une certification après visionnage.
+
+### Modèle texte multilingue
 
 ```powershell
-python -m pip install -r requirements-semantic.txt
-# Dans .env : FEEDCONTROL_SEMANTIC=1, puis relancer Python.
-python ai_server.py
+.\.venv\Scripts\python.exe -m pip install -r requirements-semantic.txt
+# Dans .env : FEEDCONTROL_SEMANTIC=1
+.\.venv\Scripts\python.exe ai_server.py
 ```
 
-Premier démarrage : téléchargement du modèle officiel `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` depuis Hugging Face (réseau et espace disque nécessaires). Le modèle enrichit les **thèmes** ; les scores de qualité restent des indices heuristiques du texte. En cas d’échec : serveur utilisable, statut heuristique explicite. Ce chemin optionnel n’a pas été exécuté dans l’environnement de développement. Aucun classificateur ici ne regarde les miniatures ou la vidéo.
+Réutilise le moteur V3 `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` avec profils enrichis. Les thèmes et types sont comparés séparément ; une ressemblance thématique n’implique pas une qualité élevée. Les similarités ne sont pas des probabilités. Installation/téléchargement requis, modèle non exécuté ici : Hugging Face est refusé par le proxy cloud (HTTP 403). Sans modèle, le diagnostic annonce des règles texte.
 
-### Linux / cloud
+### Miniatures réellement examinées
+
+L’option **Analyser les miniatures localement** envoie l’ID au Python local, qui récupère la miniature publique officielle sur `i.ytimg.com` ; aucune URL arbitraire ni redirection n’est acceptée. Image ≤1,5 Mo et 4 millions de pixels, analyse réduite à 320×180, cache 500 images / TTL 1 h, échec caché 60 s et concurrence visuelle limitée à deux.
+
+1. **Pixels (Pillow/numpy)** : composantes rouges, géométrie de formes ressemblant à des cercles ou flèches, proportion monochrome. Un objet rouge uni n’est pas considéré automatiquement comme une annotation. Ces détecteurs sont heuristiques et peuvent manquer certaines formes ou produire de faux positifs.
+2. **OCR local** : si Tesseract est installé et accessible dans le PATH, lit le texte incrusté avec limite de temps et seuil de confiance. « FOCUS IN LIFE » peut ainsi contribuer au thème motivation, même avec un titre vague. Une image noir et blanc seule ne le peut pas. L’OCR anglais peut mal lire certains textes français.
+3. **Modèle multimodal optionnel** : installer Ollama sur cet ordinateur puis `ollama pull qwen2.5vl:3b`. Ajouter `FEEDCONTROL_VISION_MODEL=qwen2.5vl:3b` dans `.env`, redémarrer Python. Le serveur contacte uniquement `127.0.0.1:11434`, avec un timeout. Le modèle reçoit les profils visuels et propose scène, thèmes, type de présentation et incertitude. Il ne reconnaît pas l’identité des visages. S’il est absent/lent/inaccessible, aucune sortie de modèle n’est inventée ; pixels et OCR restent utilisables. Ce moteur optionnel n’a pas été exécuté ici.
+
+Des annotations rouges ne prouvent pas une tromperie. En présence d’un type pédagogique explicite, le diagramme reste admissible. Sans contenu de fond identifié, elles abaissent le score et peuvent activer l’exclusion Clickbait : raison « présentation potentiellement racoleuse ». Un montage de memes suggéré avec faible incertitude par le modèle visuel alimente le type viral, sans prétendre avoir vu la vidéo. Les raisons et limites sont consultables dans le panneau ; la notice indique combien de miniatures ont réellement été examinées.
+
+## Petits créateurs : comportement visible
+
+L’option active une recherche **pertinence + date** pour élargir le pool au-delà des vidéos populaires, puis demande les métadonnées des chaînes par lots. Le panneau affiche le nombre public d’abonnés et le nombre de candidats compatibles sous le seuil (50 000 par défaut). Abonnés cachés/absents restent inconnus, jamais zéro.
+
+Score : correspondance thème +2 ; qualité×confiance ; bonus petit créateur **+1,25 uniquement si pertinent et score/confiance ≥0,65/0,55** ; retour pertinent +0,25, non pertinent −1, mauvaise classification −0,2 ; exposition récente −0,4. Diversification par thème puis remplissage jusqu’à 12 cartes. Les vues publiques sont conservées sans donner de bonus automatique de qualité. Les cartes natives n’exposent généralement pas le nombre d’abonnés : cette préférence concerne **Découvertes**, pas une reconnaissance supposée de la taille de chaque chaîne native.
+
+## Quotas et dégradation
+
+Au plus quatre thèmes par recherche, 16 résultats par thème/ordre, 64 IDs dédupliqués, vidéos/chaînes groupées par 50. Plafond local : 12 appels `search.list` par heure et par processus, jusqu’à 1 200 unités au tarif de 100 unités/recherche, plus les métadonnées ; ne garantit pas le quota Google. Petits créateurs utilise deux appels search par thème. Cache 15 min ; Explorer peut paginer après 45 s avec le `nextPageToken` réel. Avant ce délai, rotation locale dans les candidats disponibles. Cache/limite réinitialisés au redémarrage. Un retry réseau/5xx ; pas de retry refus/quota. Pas d’API YouTube interne ni scraping opaque.
+
+Les classifications sont mises en cache par ID/titre/métadonnées/option visuelle. Les réponses obsolètes après navigation ou préférences sont ignorées ; une requête serveur déjà partie peut consommer le quota. Enrichissement de 12 candidats maximum, deux requêtes à la fois côté panneau, sans attendre toutes les images avant de présenter les résultats texte. Les métadonnées d’abonnés et vues sont préservées lors de cet enrichissement.
+
+## Suivi et confidentialité
+
+Suivi désactivé initialement, uniquement après consentement. Échantillonnage 1 s : lecture active, visible, hors pause/recherche/publicité détectable. Secondes de temps réel, écritures ~4 s ; fermeture brutale peut perdre les dernières secondes. Agrégats locaux par journée UTC et catégorie primaire, conservation 7/30/90 jours, effacement complet des statistiques V4 et anciennes V3. Les multi-thèmes ne doublent pas les totaux. IDs pour déduplication bornés à 2 000/jour ; retours bornés à 500 ; exposition découverte 300 IDs/7 jours, indépendante du suivi et utilisée pour le classement demandé. Aucun historique personnel transmis à Google ou à Ollama : seuls les thèmes de recherche partent à Google ; les miniatures publiques sont récupérées par ID ; l’OCR et les modèles tournent localement.
+
+## Vérifications exécutées
 
 ```sh
-cd /workspace/Feedcontrol
-python ai_server.py
-# Dans un autre terminal :
 npm test
-python -m unittest discover -s tests -v
+.venv/bin/python -m unittest discover -s tests -v
+python tests/browser_smoke.py
 ```
 
-Pas de `npm install` nécessaire. Pour le test navigateur optionnel, installer Playwright dans un environnement de test, disposer de Chromium puis lancer `python tests/browser_smoke.py` avec le serveur lancé sans clé API. Les API Chrome, pages et réponses sont simulées et explicitement DEMO ; aucune requête à YouTube réel. Ce test peut nécessiter d’adapter le chemin Chromium à votre OS.
+Node requis uniquement pour les tests. `npm install` inutile. Playwright et Chromium requis pour le test navigateur optionnel ; le navigateur système est utilisé, les API Chrome et pages YouTube sont **simulées**.
 
-## Utilisation
+- 36 tests JavaScript : 24 titres fictifs avec scores/raisons, règles de priorité et migration, lecture, worker concurrent/consentement, Shorts, inconnues, motivation/OCR, annotations et petits créateurs.
+- 15 tests Python : classificateur, HTTP, recherche cuisine/abonnés/pagination, cache/quota/clé absente, géométrie d’images synthétiques, **OCR Tesseract réellement exécuté** et extraction du thème à partir de ce texte, erreurs visuelles.
+- Chromium DOM : persistance et propagation, automatique Cuisine sans recommandation native, préférence petits créateurs et métrique visible, Shorts modernes sans titre, feedback, SPA, statistiques/effacement et contrôle des catégories dans des fenêtres de **280, 320 et 400 px**.
 
-- **Masquer** : brainrot, clickbait, suggestif, viral, tous les Shorts. On peut aussi exclure explicitement les thèmes dans Favoriser → Exclure aussi des thèmes.
-- **Favoriser** : sélection multiple persistée dans `chrome.storage.local`. Priorité visuelle avec `order` lorsque le conteneur YouTube est flex/grid. Les autres thèmes restent visibles. Le reclassement dépend donc de la mise en page YouTube.
-- **Uniquement mes thèmes** : exclut les thèmes non sélectionnés et les inconnus ; sans thème sélectionné, ne restreint pas les thèmes. Les exclusions explicites passent toujours avant les favoris.
-- **Contenu qualitatif** : seuils score/confiance Souple 0,40/0,35 ; Équilibré 0,65/0,55 ; Strict 0,80/0,65. Ce sont des estimations textuelles, pas une certification. Un titre sportif n’est pas une preuve de qualité. Un match intégral ou entraînement peut être acceptable ; une compilation drôle est pénalisée. Les vidéos ambiguës sont signalées inconnues. En mode Favoriser, si le serveur est arrêté, les inconnues sont conservées sans être présentées comme validées ; les exclusions explicites restent actives.
-- **Découvertes FeedControl** : panneau indépendant sur l’accueil, jamais une carte native YouTube. Sous le seuil (8 par défaut), recherche de candidats ; exploration manuelle possible même au-dessus du seuil. Liens et métadonnées proviennent de l’API officielle, sans vidéo inventée. Sans résultat : message explicite, aucun assouplissement silencieux des exclusions.
-- **Petits créateurs** : bonus uniquement pour une vidéo thématiquement pertinente avec nombre public d’abonnés inférieur au seuil (50 000 par défaut). Abonnés cachés = inconnus. Les vues publiques sont conservées comme métadonnée et ne prouvent pas la qualité.
-- **Pourquoi cette vidéo ?** : raisons, limites et retours persistants Pertinente/Pas pertinente/Mauvaise classification. Ces retours ajustent le classement ; ils ne réentraînent aucun modèle. La correction d’un thème précis n’est pas encore proposée.
-- **Suivi** : désactivé initialement. Lorsque vous l’activez, enregistre des estimations de lecture active visible, hors pause, hors publicité détectable et sans compter les sauts dans la vidéo. Ne modifie jamais le lecteur. Compte des secondes de temps réel, y compris à vitesse accélérée (pas de double durée). Échantillonnage 1 s, écriture groupée ~4 s ; une fermeture brutale peut perdre les dernières secondes.
+La suite n’établit ni la précision sur toutes les miniatures YouTube, ni le bon fonctionnement d’une clé Google réelle, ni l’inférence d’un modèle optionnel. L’essai de téléchargement d’une miniature publique sur i.ytimg.com a aussi été refusé par le proxy cloud (HTTP 403) : récupération réseau des miniatures à valider sur votre ordinateur. Le chargement MV3 complet est bloqué ici par la politique système de Chromium. `tests/extension_smoke.py` reste un scénario distinct à adapter sur une machine autorisée.
 
-## Découverte, quotas, confidentialité
+## Validation manuelle en cinq minutes
 
-Clé uniquement côté Python. `search.list` : au plus quatre thèmes distincts par requête, huit candidats par thème, 32 candidats maximum. Métadonnées groupées avec `videos.list` et `channels.list`. Cache mémoire TTL 15 minutes, 50 recherches différentes maximum en cache ; au plus 12 appels **search** par heure par processus (jusqu’à 1 200 unités selon le tarif API actuel de 100 par recherche, plus les métadonnées). Ce plafond ne garantit aucun quota Google et se réinitialise au redémarrage. Une seule recherche exécutée simultanément. Un retry seulement sur panne réseau/5xx ; pas de retry sur refus/quota. Aucun appel à une API YouTube interne.
+1. Charger la 0.4.1, redémarrer Python, recharger YouTube, vérifier diagnostic et réglages en grand. Tester clavier Tab/Espace, zoom et défilement du popup.
+2. Choisir **Cuisine → Uniquement**, sans recette native : vérifier le panneau Découvertes, ses candidats réels si API configurée, sinon l’explication et le lien de recherche.
+3. Activer **Petits créateurs** : vérifier le nombre public d’abonnés, les inconnus explicitement signalés et le nombre de candidats compatibles. Aucun petit créateur trouvé n’est un résultat possible, pas un succès simulé.
+4. Favoriser Sport, activer le qualitatif et les Shorts pédagogiques : comparer analyse tactique, vrai match long, edit drôle et Short sans titre. Examiner les limites affichées. Les flèches/cercles ne constituent pas une preuve suffisante à eux seuls.
+5. Activer le suivi, regarder 15 s, mettre en pause et changer d’onglet ; vérifier puis effacer les données. Arrêter Python pour tester le mode dégradé et le message de correction.
 
-Le bouton Explorer réutilise les candidats en cache durant 15 minutes ; la pénalité d’exposition favorise les candidats non montrés. Il ne promet pas de nouvelles vidéos si le pool est épuisé. Le classement combine correspondance thème +2, score qualité × confiance, bonus petit créateur +0,3, retour pertinent +0,25 / non pertinent −1 / mauvaise classification −0,2, exposition récente −0,4. Une première passe diversifie par catégorie primaire, puis complète jusqu’à 12 cartes. L’exclusion intervient **avant** le classement. Les vues publiques ne donnent aucun bonus de qualité ; leur intégration au score reste à améliorer. Les recherches suivent l’ordre des quatre premiers thèmes choisis si plus de quatre sont sélectionnés.
+## Limites conservées
 
-Une réponse devenue obsolète après changement de préférences/navigation est ignorée côté extension ; une requête serveur déjà partie peut néanmoins consommer le quota. Timeout réseau et file de classification limitée à trois appels. Cache par ID + titre limité à 500 entrées. Les métadonnées et le cache API restent en mémoire, disparaissent au redémarrage.
+DOM YouTube évolutif et reclassement CSS dépendant de flex/grid ; pas de modification du lecteur ou des publicités ; les résultats API ne déterminent pas exactement le format Shorts (si tous les Shorts sont exclus, les durées ≤3 min ou inconnues sont retirées prudemment). Pas de visionnage complet, pas de certification de qualité, pas de réentraînement instantané, pas de reconnaissance de personnes. Retours de classement, pas encore d’éditeur de thèmes corrigés. Pas de courbe comparative entre deux périodes. La maquette `ui_reference/feedcontrol-v2.html` n’a pas été fournie ; le design suit le texte, pas une reproduction vérifiée de ce fichier.
 
-Titres transmis uniquement au Python local pour classement. La découverte transmet les noms des thèmes sélectionnés à l’API Google, pas l’historique de lecture. Aucune clé dans Chrome. Les données de suivi sont dans `chrome.storage.local`, agrégées par journée UTC, 7/30/90 jours au choix. Un ID est conservé localement pour dédupliquer les vidéos (2 000/jour max), sans titre ni URL. Un multi-thème est attribué à la première catégorie reconnue selon l’ordre de `taxonomy.json` pour éviter les totaux doublés. Les répartitions favoris/autres sont attribuées selon les favoris lors de la lecture. Les IDs récemment découverts sont limités à 300 pendant 7 jours et les retours à 500 entrées ; indépendants du consentement de suivi, ils servent au classement demandé. Effacer les statistiques supprime les agrégats V4 et l’ancien audit V3, pas les préférences ni les retours. Les chiffres V3 n’ont pas été migrés en faux historique V4.
-
-## Démo en cinq minutes
-
-1. Charger l’extension, lancer Python, ouvrir le popup : statut serveur et statut **clé configurée**, qui n’est pas une preuve d’accès API. Cliquer Ouvrir YouTube.
-2. Sélectionner Sport et Bricolage. Comparer Favoriser et Uniquement, puis activer Contenu qualitatif et changer les seuils. Vérifier la notice et les vidéos masquées.
-3. Activer Découvertes, fixer le seuil à 30. Sans clé : message de configuration. Avec clé valide : cartes YouTube réelles ou erreur/absence de résultat explicite. Cliquer Pourquoi cette vidéo et enregistrer un retour.
-4. Activer le suivi ; regarder une vidéo 15 s, mettre en pause 10 s et passer sur un autre onglet. Vérifier que seule la lecture active contribue ; ouvrir Statistiques puis effacer.
-5. Ouvrir `demo.html` depuis le dossier pour comparer les règles sur des titres inventés clairement marqués **DEMO**, sans toucher aux préférences Chrome.
-
-## Vérifications et limites
-
-Tests automatisés : `npm test` (32 cas, dont 24 titres avec trace de scores), `python -m unittest discover -s tests -v` (6 tests : classificateur, API HTTP, cache/déduplication/métadonnées, clé absente, erreurs/quota). Le test `browser_smoke.py` vérifie le vrai DOM Chromium avec des API Chrome simulées ; `extension_smoke.py` tente le chargement MV3 complet (bloqué ici par la politique Chromium). son résultat réel est consigné dans `CHANGELOG_V4.md`.
-
-À vérifier manuellement sur **YouTube réel** : accueil connecté et déconnecté, scroll infini, bouton Retour, navigation SPA vers vidéo puis accueil, éléments Shorts, clic/miniature préservés, publicité/lecteur intacts, filtres après fermeture popup, clavier Tab/Espace/Entrée, console et erreurs dans `chrome://extensions`. Arrêter Python pour vérifier le mode dégradé ; ne jamais prétendre que les inconnus sont validés. Tester une clé réelle, un quota refusé et des abonnés masqués. Aucun de ces résultats en production ne peut être déduit des fixtures.
-
-Limites connues : DOM YouTube évolutif ; classement flex/grid dépendant du site ; suivi heuristique des titres ; détection d’annonces dépendant de `ad-showing` ; pas de vision ; le format Shorts d’un résultat `search.list` n’est pas établi par cette API : avec Shorts désactivés, la découverte écarte prudemment toutes les vidéos de 3 minutes ou moins et celles sans durée, y compris certains formats longs courts ; pas de garanti de qualité sémantique réelle ; pas de reproduction V2 sans son fichier ; aucune validation de clé Google réelle ni test du modèle optionnel.
-
-## Organisation
-
-`taxonomy.json` et sa copie navigateur `taxonomy.js` (égalité testée), `classifier.js` (règles/scoring/temps), `background.js` (réseau et écritures sérialisées), `content.js/css` (accueil, découverte, lecture), `popup.html/css/js` (contrôles et graphiques), `stats.html`, `ai_server.py`, `tests/`, `legacy_v3/`. Les scripts de production n’utilisent aucun CDN ni JS distant. CSP Manifest V3 par défaut. Permissions : stockage et serveur local ; injection seulement sur `www.youtube.com`.
+La V3 d’origine est archivée dans `legacy_v3/`. Le prompt fourni reste dans `docs/`. Les scripts de production ne chargent aucun CDN. La branche de livraison est `feedcontrol-v4` ; `main` n’est pas modifiée.

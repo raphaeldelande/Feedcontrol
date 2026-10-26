@@ -1,15 +1,15 @@
-importScripts('taxonomy.js','classifier.js');
-const C=FeedControlClassifier;let queue=Promise.resolve();let active=0;const waiting=[];const cache=new Map();
+importScripts('taxonomy.js','classification_rules.js','classifier.js');
+const C=FeedControlClassifier;let classifierFingerprint=null;let queue=Promise.resolve();let active=0;const waiting=[];const cache=new Map();
 async function limited(fn){if(active>=3)await new Promise(r=>waiting.push(r));active++;try{return await fn();}finally{active--;waiting.shift()?.();}}
-async function api(path,body){return limited(async()=>{const r=await fetch('http://127.0.0.1:8765'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(12000)});const data=await r.json();if(!r.ok)throw Error(data.error||`Serveur : ${r.status}`);return data;});}
+async function api(path,body){return limited(async()=>{const r=await fetch('http://127.0.0.1:8765'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(path==='/discover'?60000:25000)});const data=await r.json();if(!r.ok)throw Error(data.error||`Serveur : ${r.status}`);return data;});}
 async function handle(m,sender){
- if(m.type==='FC_STATUS'){try{return await api('/');}catch{return {status:'offline',discovery:false,error:'Serveur local indisponible — lancer python ai_server.py'};}}
+ if(m.type==='FC_STATUS'){try{const state=await api('/');const fingerprint=JSON.stringify([state.serverVersion,state.method,state.model_loaded,state.vision]);if(fingerprint!==classifierFingerprint){classifierFingerprint=fingerprint;cache.clear();await chrome.storage.local.set({classifierRevision:fingerprint});}return state;}catch{return {status:'offline',discovery:false,error:'Serveur local indisponible — lancer python ai_server.py'};}}
  if(m.type==='FC_CLASSIFY'){
-  const key=m.video?.videoId+':'+m.video?.title;const old=cache.get(key);if(old&&old.until>Date.now())return old.value;
+  const key=JSON.stringify([m.video?.videoId,m.video?.title,m.video?.channelTitle,m.video?.description,!!m.video?.analyzeThumbnail]);const old=cache.get(key);if(old&&old.until>Date.now())return old.value;
   let value;try{value=await api('/classify',m.video);}catch{value={...C.classify(m.video),degraded:true};}
-  cache.set(key,{until:Date.now()+(value.degraded?30000:3600000),value});if(cache.size>500)cache.delete(cache.keys().next().value);return value;
+  cache.set(key,{until:Date.now()+(value.degraded?30000:value.visualAnalysis?.status==='unavailable'?60000:3600000),value});if(cache.size>500)cache.delete(cache.keys().next().value);return value;
  }
- if(m.type==='FC_DISCOVER')return api('/discover',{topics:m.topics,refresh:!!m.refresh});
+ if(m.type==='FC_DISCOVER')return api('/discover',{topics:m.topics,refresh:!!m.refresh,smallCreators:!!m.smallCreators,subscriberThreshold:m.subscriberThreshold,analyzeThumbnail:!!m.analyzeThumbnail});
  if(m.type==='FC_FEEDBACK'){
   const {feedback={}}=await chrome.storage.local.get('feedback');feedback[m.videoId]={verdict:m.verdict,at:Date.now()};
   const entries=Object.entries(feedback).sort((a,b)=>b[1].at-a[1].at).slice(0,500);await chrome.storage.local.set({feedback:Object.fromEntries(entries)});return {ok:true};

@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "FeedControl — Votre attention, vos choix",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Filtres explicables, découvertes YouTube et suivi local avec consentement.",
   "permissions": [
     "storage"
@@ -20,6 +20,7 @@
       ],
       "js": [
         "taxonomy.js",
+        "classification_rules.js",
         "classifier.js",
         "content.js"
       ],

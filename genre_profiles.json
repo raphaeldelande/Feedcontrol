@@ -1,0 +1,213 @@
+{
+  "science": {
+    "positive": [
+      "science explanation, physics experiments, biology, astronomy and scientific method",
+      "vulgarisation scientifique, expériences de physique, biologie et astronomie"
+    ],
+    "negative": [
+      "pseudoscientific miracle cure, shocking fake science compilation"
+    ],
+    "visual": [
+      "laboratory apparatus, scientific diagram, telescope or microscope"
+    ],
+    "searchQuery": "science vulgarisation expérience explication"
+  },
+  "motivation": {
+    "positive": [
+      "motivational speech, focus in life, discipline, self improvement, focus on yourself",
+      "discours de motivation, discipline, dépassement de soi, habitudes et objectifs"
+    ],
+    "negative": [
+      "sigma meme edit, celebrity gossip, gym fails compilation"
+    ],
+    "visual": [
+      "monochrome portrait with motivational quote text",
+      "a speaker giving a motivational speech"
+    ],
+    "searchQuery": "motivation discipline discours habitudes"
+  },
+  "sport": {
+    "positive": [
+      "football tactical analysis, coaching, technique, full match, authentic sports competition",
+      "analyse tactique, entraînement expliqué, biomécanique, match intégral"
+    ],
+    "negative": [
+      "funny football moments, player memes, sigma edits, sports fails compilation",
+      "short funny sports edit, repeated clips with dramatic music, troll football"
+    ],
+    "visual": [
+      "a tactical football diagram, a coach demonstrating a technique",
+      "a sports meme montage with red arrows and exaggerated reactions"
+    ],
+    "searchQuery": "sport analyse tactique entraînement technique"
+  },
+  "bricolage": {
+    "positive": [
+      "woodworking project, repairing furniture, carpentry tutorial step by step",
+      "tutoriel bricolage, rénovation, outils et fabrication en bois"
+    ],
+    "negative": [
+      "dangerous tool prank, funny construction fails"
+    ],
+    "visual": [
+      "woodworking tools on a workbench, someone building furniture"
+    ],
+    "searchQuery": "bricolage tutoriel fabrication réparation"
+  },
+  "cuisine": {
+    "positive": [
+      "recette de cuisine pas à pas, techniques de cuisson, pâtisserie maison",
+      "cooking recipe tutorial, chef preparing food, baking step by step"
+    ],
+    "negative": [
+      "eating challenge, food prank, compilation funny food fails"
+    ],
+    "visual": [
+      "ingredients on a kitchen worktop, a recipe being prepared, baking utensils"
+    ],
+    "searchQuery": "recette cuisine maison pas à pas"
+  },
+  "musique": {
+    "positive": [
+      "authentic music performance, live concert, instrument technique, music theory",
+      "concert, interprétation musicale authentique, technique instrumentale et solfège"
+    ],
+    "negative": [
+      "celebrity gossip, repetitive meme remix compilation"
+    ],
+    "visual": [
+      "a musician performing, an instrument demonstration, music notation"
+    ],
+    "searchQuery": "musique concert live technique instrument"
+  },
+  "philosophie": {
+    "positive": [
+      "philosophy lecture, ethics, arguments, reasoning and philosophical texts",
+      "cours de philosophie, éthique, textes philosophiques, explication de concepts"
+    ],
+    "negative": [
+      "sigma quotes montage without discussion"
+    ],
+    "visual": [
+      "a philosophy lecture, books with explanatory text"
+    ],
+    "searchQuery": "philosophie cours explication concepts"
+  },
+  "cinema": {
+    "positive": [
+      "cinema analysis, directing, editing, film criticism with arguments",
+      "analyse de film, mise en scène, montage cinéma, critique argumentée"
+    ],
+    "negative": [
+      "movie scene meme compilation, celebrity gossip"
+    ],
+    "visual": [
+      "a film analysis diagram or editing timeline"
+    ],
+    "searchQuery": "cinéma analyse mise en scène"
+  },
+  "histoire": {
+    "positive": [
+      "history documentary, historical sources, archives, archaeology",
+      "histoire, sources historiques, archives, archéologie, récit documenté"
+    ],
+    "negative": [
+      "historical conspiracy clickbait, meme about historical figures"
+    ],
+    "visual": [
+      "archive photographs, historical map, archaeological objects"
+    ],
+    "searchQuery": "histoire documentaire sources archives"
+  },
+  "geopolitique": {
+    "positive": [
+      "geopolitical analysis, international relations, diplomacy, maps",
+      "analyse géopolitique, diplomatie, relations internationales et cartes"
+    ],
+    "negative": [
+      "unverified sensational war claim, propaganda meme montage"
+    ],
+    "visual": [
+      "an explanatory map, international news analysis studio"
+    ],
+    "searchQuery": "géopolitique analyse relations internationales"
+  },
+  "economie": {
+    "positive": [
+      "economics lesson, inflation, macroeconomics, economic data explained",
+      "cours économie, inflation, données économiques et mécanismes expliqués"
+    ],
+    "negative": [
+      "get rich quick guaranteed profit, money flex compilation"
+    ],
+    "visual": [
+      "an economic chart with explanation"
+    ],
+    "searchQuery": "économie comprendre inflation cours"
+  },
+  "tech_ia": {
+    "positive": [
+      "artificial intelligence explained, software engineering tutorial, coding",
+      "programmation, intelligence artificielle, informatique et réseaux de neurones"
+    ],
+    "negative": [
+      "AI money scam, fake artificial intelligence miracle tool"
+    ],
+    "visual": [
+      "code editor, software diagram, machine learning illustration"
+    ],
+    "searchQuery": "intelligence artificielle programmation tutoriel explication"
+  },
+  "maths": {
+    "positive": [
+      "mathematics lesson, proof, algebra, geometry, worked example",
+      "cours mathématiques, démonstration, algèbre, géométrie et exercices corrigés"
+    ],
+    "negative": [
+      "fake impossible IQ clickbait without explanation"
+    ],
+    "visual": [
+      "mathematical equations on a board with a worked example"
+    ],
+    "searchQuery": "mathématiques cours exercices corrigés"
+  },
+  "sante": {
+    "positive": [
+      "health education, sleep, nutrition, scientific evidence and prevention",
+      "santé, sommeil, nutrition et prévention avec explications"
+    ],
+    "negative": [
+      "miracle cure, unverified medical advice, body transformation hype"
+    ],
+    "visual": [
+      "a medical educational diagram, a nutrition lesson"
+    ],
+    "searchQuery": "santé sommeil nutrition explication scientifique"
+  },
+  "langues": {
+    "positive": [
+      "language lesson, grammar, pronunciation, vocabulary, listening practice",
+      "apprentissage langues, grammaire, prononciation et vocabulaire"
+    ],
+    "negative": [
+      "language prank, funny accent meme compilation"
+    ],
+    "visual": [
+      "vocabulary or grammar written on a board"
+    ],
+    "searchQuery": "langues apprendre anglais cours prononciation"
+  },
+  "documentaires": {
+    "positive": [
+      "long form documentary with reporting, interviews, field investigation",
+      "documentaire, enquête, reportage et entretiens de terrain"
+    ],
+    "negative": [
+      "recycled viral clips labeled documentary without investigation"
+    ],
+    "visual": [
+      "a documentary interview, field reporting footage"
+    ],
+    "searchQuery": "documentaire enquête reportage"
+  }
+}

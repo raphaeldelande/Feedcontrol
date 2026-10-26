@@ -13,13 +13,13 @@ SHIM = r'''(() => {
  window.chrome={storage:{local:storage,onChanged:{addListener:fn=>listeners.push(fn)}},tabs:{create:async()=>{}},runtime:{getURL:path=>'/__fc__/'+path,sendMessage:async m=>{
   if(m.type==='FC_STATUS')return {status:'offline',error:'DEMO serveur arrêté'};
   if(m.type==='FC_CLASSIFY')return {...FeedControlClassifier.classify(m.video),degraded:true};
-  if(m.type==='FC_DISCOVER'){if(!getStore().testAPI)return {error:'DEMO Clé YOUTUBE_API_KEY absente'};return {videos:[{...FeedControlClassifier.classify('Bricolage tutoriel DEMO'),videoId:'eeeeeeeeeee',channelTitle:'DEMO fixture',source:'youtube_api'}]};}
+  if(m.type==='FC_DISCOVER'){(window.__discoveryCalls??=[]).push(m);if(!getStore().testAPI)return {error:'DEMO Clé YOUTUBE_API_KEY absente'};if(m.topics.includes('cuisine'))return {videos:[{...FeedControlClassifier.classify('DEMO cuisine recette pas à pas'),videoId:'fffffffffff',subscriberCount:3200,duration:'PT8M',channelTitle:'DEMO petite chaîne',source:'youtube_api'},{...FeedControlClassifier.classify('DEMO cuisine recette pas à pas'),videoId:'ggggggggggg',subscriberCount:2000000,duration:'PT8M',channelTitle:'DEMO grande chaîne',source:'youtube_api'}]};return {videos:[{...FeedControlClassifier.classify('Bricolage tutoriel DEMO'),videoId:'eeeeeeeeeee',channelTitle:'DEMO fixture',source:'youtube_api'}]};}
   if(m.type==='FC_FEEDBACK'){const all=getStore();await storage.set({feedback:{...all.feedback,[m.videoId]:{verdict:m.verdict}}});return {ok:true};}
   if(m.type==='FC_CLEAR'){await storage.remove('statsV4');return {ok:true};}
   return {ok:true};
  }}};
 })();'''
-HTML='''<!doctype html><html><head><meta charset="utf-8"></head><body><ytd-browse page-subtype="home"><div id="primary"><div id="contents" style="display:flex"><ytd-rich-item-renderer><a id="video-title" href="/watch?v=aaaaaaaaaaa">Football analyse tactique</a></ytd-rich-item-renderer><ytd-rich-item-renderer><a id="video-title" href="/watch?v=bbbbbbbbbbb">Bricolage tutoriel étagère</a></ytd-rich-item-renderer><ytd-rich-item-renderer><a id="video-title" href="/watch?v=ccccccccccc">Funny football moments compilation</a></ytd-rich-item-renderer></div></div></ytd-browse><script src="/__fc__/taxonomy.js"></script><script src="/__fc__/classifier.js"></script><script src="/__fc__/content.js"></script></body></html>'''
+HTML='''<!doctype html><html><head><meta charset="utf-8"></head><body><ytd-browse page-subtype="home"><div id="primary"><div id="contents" style="display:flex"><ytd-rich-item-renderer><a id="video-title" href="/watch?v=aaaaaaaaaaa">Football analyse tactique</a></ytd-rich-item-renderer><ytd-rich-item-renderer><a id="video-title" href="/watch?v=bbbbbbbbbbb">Bricolage tutoriel étagère</a></ytd-rich-item-renderer><ytd-rich-item-renderer><a id="video-title" href="/watch?v=ccccccccccc">Funny football moments compilation</a></ytd-rich-item-renderer></div></div></ytd-browse><script src="/__fc__/taxonomy.js"></script><script src="/__fc__/classification_rules.js"></script><script src="/__fc__/classifier.js"></script><script src="/__fc__/content.js"></script></body></html>'''
 def run():
  with sync_playwright() as p,tempfile.TemporaryDirectory() as profile:
   context=p.chromium.launch_persistent_context(profile,executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
@@ -55,6 +55,29 @@ def run():
   expect(page.locator('#feedcontrol-panel a')).to_have_attribute('href','https://www.youtube.com/watch?v=eeeeeeeeeee')
   page.locator('#feedcontrol-panel summary').click();page.get_by_role('button',name='Pertinente',exact=True).click()
   expect(page.get_by_role('button',name='Pertinente',exact=True)).to_have_attribute('aria-pressed','true')
+  # Régressions : une seule colonne, y compris en fenêtre étroite ; aucune carte tronquée.
+  for width in [280,320,400]:
+   popup.set_viewport_size({'width':width,'height':700})
+   assert popup.evaluate('document.documentElement.scrollWidth')<=width
+   rects=popup.locator('#positive .category').evaluate_all('(els)=>els.map(e=>({x:e.getBoundingClientRect().x,right:e.getBoundingClientRect().right,y:e.getBoundingClientRect().y}))')
+   assert all(r['x']>=0 and r['right']<=width for r in rects)
+   assert len({round(r['x']) for r in rects})==1
+  # Mode Uniquement déclenche de nouvelles vidéos Cuisine sans activer manuellement Découvertes.
+  popup.locator('[data-code="bricolage"][data-key="favorites"]').uncheck()
+  popup.locator('[data-code="cuisine"][data-key="favorites"]').check()
+  popup.locator('#discovery').uncheck()
+  expect(page.locator('#feedcontrol-panel .fc-card')).to_have_count(2)
+  expect(page.locator('#feedcontrol-panel')).to_contain_text('DEMO cuisine recette')
+  assert page.evaluate('window.__discoveryCalls.at(-1).topics.includes("cuisine")')
+  popup.locator('#smallCreators').check()
+  expect(page.locator('#feedcontrol-panel')).to_contain_text('candidats compatibles sous')
+  expect(page.locator('#feedcontrol-panel .fc-card').first).to_contain_text('DEMO petite chaîne')
+  page.wait_for_function('window.__discoveryCalls?.at(-1)?.smallCreators === true')
+  # Shorts modernes sans titre et Shorts de sport sans pédagogie ne passent pas silencieusement.
+  popup.locator('#mode').select_option('favor')
+  page.evaluate('''()=>{const root=document.querySelector('#contents');root.innerHTML='<ytm-shorts-lockup-view-model><a href="/shorts/hhhhhhhhhhh"></a></ytm-shorts-lockup-view-model><ytd-reel-item-renderer><a aria-label="Football insane highlights" href="/shorts/iiiiiiiiiii"></a></ytd-reel-item-renderer>';}''')
+  expect(page.locator('ytm-shorts-lockup-view-model.feedcontrol-hidden')).to_have_count(1)
+  expect(page.locator('ytd-reel-item-renderer.feedcontrol-hidden')).to_have_count(1)
   page.evaluate("history.pushState({},'','/watch?v=bbbbbbbbbbb');window.dispatchEvent(new Event('yt-navigate-finish'))")
   expect(page.locator('#feedcontrol-panel')).to_have_count(0)
   popup.evaluate("chrome.storage.local.set({statsV4:{days:{[new Date().toISOString().slice(0,10)]:{seconds:60,views:1,hidden:0,shortsSeconds:0,categories:{bricolage:{seconds:60,views:1}}}}}})")

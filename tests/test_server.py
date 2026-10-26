@@ -81,3 +81,64 @@ class HTTPTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class DiscoveryRegressionTests(unittest.TestCase):
+    def test_cooking_from_zero_native_and_small_creator_search(self):
+        calls=[]
+        def api(endpoint,params):
+            calls.append((endpoint,params))
+            if endpoint=='search':
+                return {'items':[{'id':{'videoId':'abcdefghijk'}}],'nextPageToken':'page2'}
+            if endpoint=='videos':
+                return {'items':[{'id':'abcdefghijk','snippet':{'title':'Recette de cuisine pas à pas','channelId':'tiny'},'statistics':{'viewCount':'700'}}]}
+            return {'items':[{'id':'tiny','statistics':{'subscriberCount':'3200','hiddenSubscriberCount':False}}]}
+        d=app.Discovery(api)
+        result=d.discover(['cuisine'],small_creators=True)
+        self.assertEqual(result['smallCreatorCount'],1)
+        self.assertEqual(result['videos'][0]['subscriberCount'],3200)
+        self.assertIn('cuisine',result['videos'][0]['topics'])
+        searches=[p for e,p in calls if e=='search']
+        self.assertEqual([p['order'] for p in searches],['relevance','date'])
+        self.assertIn('recette',searches[0]['q'])
+        self.assertEqual(len([e for e,_ in calls if e=='channels']),1)
+        d.cache[(('cuisine',),True)]=(app.time.time()-50,result)
+        d.discover(['cuisine'],refresh=True,small_creators=True)
+        self.assertTrue(all(p.get('pageToken')=='page2' for e,p in calls[-4:] if e=='search'))
+
+    def test_profile_quality_not_fame_and_input_validation(self):
+        v=app.classify('David Goggins focus in life')
+        self.assertIn('motivation',v['topics'])
+        self.assertLess(v['qualityConfidence'],.5)
+        self.assertEqual(set(app.PROFILES),set(app.TOPICS))
+        for p in app.PROFILES.values():
+            self.assertTrue(p['positive']);self.assertTrue(p['negative']);self.assertTrue(p['visual'])
+
+
+class SemanticPathTests(unittest.TestCase):
+    def test_semantic_topic_does_not_certify_quality(self):
+        import numpy as np
+        class FakeModel:
+            def encode(self,*args,**kwargs):return np.array([[1.]])
+        references=np.array([[.8 if label=='sport' and axis=='topic' else .1] for label,axis,_ in app.semantic_prompts])
+        with patch.object(app,'model',FakeModel()),patch.object(app,'embeddings',references):
+            v=app.classify('football')
+            self.assertIn('sport',v['topics'])
+            self.assertEqual(v['qualityConfidence'],.15)
+            self.assertEqual(v['contentType'],'inconnu')
+        for i,(label,axis,_) in enumerate(app.semantic_prompts):
+            if label=='compilation_virale' and axis=='type':references[i]=.7
+        with patch.object(app,'model',FakeModel()),patch.object(app,'embeddings',references):
+            v=app.classify('football')
+            self.assertIn('viral',v['flags'])
+            self.assertLess(v['qualityScore'],.5)
+
+    def test_failed_model_load_does_not_leave_half_initialized_model(self):
+        import types
+        class BrokenModel:
+            def __init__(self,*args):pass
+            def encode(self,*args,**kwargs):raise RuntimeError('test')
+        with patch.dict(os.environ,{'FEEDCONTROL_SEMANTIC':'1'}),patch.dict('sys.modules',{'sentence_transformers':types.SimpleNamespace(SentenceTransformer=BrokenModel)}),patch.object(app,'model',None),patch.object(app,'embeddings',None),patch.object(app,'model_error',None):
+            app.load_model()
+            self.assertIsNone(app.model)
+            self.assertIsNone(app.embeddings)
+            self.assertEqual(app.model_error,'RuntimeError')

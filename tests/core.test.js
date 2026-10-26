@@ -24,3 +24,27 @@ test('migration V3 et taxonomie commune',()=>{assert.deepEqual(C.migrate({only:[
 test('Shorts découverte : exclusion prudente des durées courtes ou inconnues',()=>{assert.equal(C.potentialShort({duration:'PT3M'}),true);assert.equal(C.potentialShort({duration:'PT4M'}),false);assert.equal(C.potentialShort({}),true);assert.equal(C.potentialShort({duration:'PT1H2M3S'}),false);});
 
 test('favoriser en mode dégradé préserve les inconnues sans les valider',()=>{const v={...C.classify('inconnu'),degraded:true};assert.equal(C.decide(v,{mode:'favor',quality:true}).visible,true);assert.equal(C.decide(v,{mode:'only',favorites:['science'],quality:true}).visible,false);});
+
+test('régression motivation : punchline et OCR sans inférer qualité depuis un portrait',()=>{
+ const a=C.classify('FOCUS IN LIFE — stay focused');assert.ok(a.topics.includes('motivation'));assert.equal(a.qualityConfidence,.15);
+ const b=C.classify({title:'Episode 8',visualAnalysis:{status:'analyzed',ocrText:'FOCUS ON YOURSELF',signals:{monochrome:true}}});assert.ok(b.topics.includes('motivation'));
+ const c=C.classify({title:'Episode 9',visualAnalysis:{status:'analyzed',ocrText:'',signals:{monochrome:true}}});assert.deepEqual(c.topics,[]);
+});
+test('régression Shorts : sport ne garantit ni pédagogie ni qualité',()=>{
+ assert.equal(C.decide(C.classify('football insane highlights'),{},true).visible,false);
+ assert.equal(C.decide(C.classify('Football analyse tactique'),{},true).visible,true);
+ assert.equal(C.decide(C.classify('Football full match'),{},true).visible,false);
+ assert.equal(C.decide(C.classify('Football full match'),{},false).visible,true);
+ assert.equal(C.decide(C.classify('titre inconnu'),{hideUnknown:true}).visible,false);
+});
+test('miniatures : annotations suspectes filtrables, diagramme pédagogique conservé',()=>{
+ const visualAnalysis={status:'analyzed',ocrText:'',signals:{redCircleLikeCount:1}};
+ const risky=C.classify({title:'Football surprise',visualAnalysis});assert.equal(risky.thumbnailAnalyzed,true);assert.equal(C.decide(risky,{blocked:['clickbait']}).visible,false);
+ const diagram=C.classify({title:'Football analyse tactique',visualAnalysis});assert.equal(C.decide(diagram,{blocked:['clickbait'],quality:true}).visible,true);
+});
+test('petits créateurs : bonus significatif réservé aux candidats de qualité',()=>{
+ const v=C.classify('Cuisine recette pas à pas');const small={...v,subscriberCount:2000},big={...v,subscriberCount:200000};
+ assert.ok(C.decide(small,{favorites:['cuisine'],smallCreators:true}).rank-C.decide(big,{favorites:['cuisine'],smallCreators:true}).rank>=1);
+ const unknown={...C.classify('Cuisine demain'),subscriberCount:100};assert.ok(!C.decide(unknown,{favorites:['cuisine'],smallCreators:true}).recommendationReasons.some(t=>t.includes('Petite chaîne')));
+ assert.deepEqual(C.RULES,require('../classification_rules.json'));
+});
